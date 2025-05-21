@@ -1,35 +1,56 @@
 <template>
   <view class="container">
-    <image
-      class="logo"
-      src="/static/logo.png"
-      mode="aspectFit"
-      :style="{ aspectRatio: 9.357 }"
-    ></image>
-    <view class="heartbeat-status">
-      <view v-if="heartbeat === false" class="error-banner">
-        <text>Backend connection lost. Please check the server.</text>
-      </view>
-      <view v-else-if="heartbeat === true" class="green-light">
-        <text style="color: #4caf50; font-size: 18px">●</text>
-        <text> Backend Connected</text>
-      </view>
-    </view>
-    <!-- Upload Section -->
-    <view class="upload-section">
-      <button @click="handleLocalUpload">Upload Local Excel</button>
-      <input type="text" v-model="remoteUrl" placeholder="Enter remote URL" />
-      <button @click="handleRemoteUpload">Submit URL</button>
-    </view>
-
-    <!-- Task List -->
-    <view class="task-list">
-      <TaskProgress
-        v-if="tasks.length"
-        :task="tasks[0]"
-        @retryTask="checkTaskStatus"
+    <!-- Header Section -->
+    <header class="header">
+      <image
+        class="logo"
+        src="/static/logo.png"
+        mode="aspectFit"
+        :style="{ aspectRatio: 9.357 }"
       />
-    </view>
+      <connection-status class="status-indicator" />
+    </header>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Upload Section -->
+      <section class="upload-card">
+        <h2 class="section-title">File Upload</h2>
+        <view class="upload-options">
+          <button class="upload-button primary" @click="handleLocalUpload">
+            <text class="button-icon">📁</text>
+            Upload Local File
+          </button>
+          <view class="remote-upload-group">
+            <input
+              class="url-input"
+              v-model="remoteUrl"
+              placeholder="Enter remote URL"
+              @keyup.enter="handleRemoteUpload"
+            />
+            <button class="upload-button secondary" @click="handleRemoteUpload">
+              Submit URL
+            </button>
+          </view>
+        </view>
+      </section>
+
+      <!-- Task List Section -->
+      <section class="tasks-section">
+        <h2 class="section-title">Task History</h2>
+        <view class="task-list">
+          <TaskProgress
+            v-for="task in allTasks"
+            :key="task.task_id"
+            :task="task"
+            @retryTask="checkTaskStatus"
+          />
+          <view v-if="!allTasks.length" class="empty-state">
+            <text class="empty-text">No tasks available</text>
+          </view>
+        </view>
+      </section>
+    </main>
   </view>
 </template>
 
@@ -38,18 +59,29 @@
 import UniFilePicker from "@/uni_modules/uni-file-picker/components/uni-file-picker/utils.js";
 import api from "@/utils/api";
 import TaskProgress from "@/components/TaskProgress.vue";
+import ConnectionStatus from "@/components/ConnectionStatus.vue";
 
 export default {
   components: {
     TaskProgress,
+    ConnectionStatus,
   },
   data() {
     return {
       tasks: [],
       remoteUrl: "",
       pollingIntervals: {},
-      heartbeat: true,
     };
+  },
+  computed: {
+    allTasks() {
+      return this.tasks; // Now showing all tasks regardless of status
+    },
+    activeTasks() {
+      return this.tasks.filter(
+        (task) => !["SUCCESS", "FAILURE"].includes(task.status)
+      );
+    },
   },
   methods: {
     async handleLocalUpload() {
@@ -89,7 +121,10 @@ export default {
     },
 
     async handleRemoteUpload() {
-      if (!this.remoteUrl) return;
+      if (!this.remoteUrl) {
+        uni.showToast({ title: "Please enter a URL", icon: "none" });
+        return;
+      }
       this.startUpload(this.remoteUrl, true);
     },
 
@@ -182,42 +217,150 @@ export default {
 </script>
 
 <style scoped>
+/* Previous styles remain unchanged */
 .container {
+  padding: 32rpx;
+  max-width: 1200rpx;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.header {
   display: flex;
-  justify-content: left;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #eee;
 }
 
 .logo {
-  /* Base size - set only one dimension */
-  width: 200rpx; /* OR height: 200rpx */
-  height: auto; /* Maintain aspect ratio */
-
-  /* Aspect ratio control */
-  aspect-ratio: 9.357; /* Match with inline style value */
+  width: 300rpx;
+  height: auto;
+  aspect-ratio: 9.357;
   object-fit: contain;
+  filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.1));
+}
 
-  /* Responsive constraints */
-  max-width: 80%;
-  max-height: 30vh;
+.status-indicator {
+  flex-shrink: 0;
+}
 
-  /* Styling */
-  margin: 40rpx 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.content {
+  display: grid;
+  gap: 48rpx;
+}
+
+.upload-card {
+  padding: 32rpx;
+  background: #ffffff;
   border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-/* Optional: Platform-specific tweaks */
-/*
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 24rpx;
+}
+
+.upload-options {
+  display: grid;
+  gap: 24rpx;
+}
+
+.remote-upload-group {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.url-input {
+  flex: 1;
+  padding: 16rpx 24rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  transition: border-color 0.3s ease;
+}
+
+.url-input:focus {
+  border-color: #2196f3;
+  outline: none;
+}
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 32rpx;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.upload-button.primary {
+  background: #2196f3;
+  color: white;
+}
+
+.upload-button.primary:active {
+  background: #1976d2;
+}
+
+.upload-button.secondary {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+.upload-button.secondary:active {
+  background: #bbdefb;
+}
+
+.button-icon {
+  font-size: 32rpx;
+}
+
+.tasks-section {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.task-list {
+  display: grid;
+  gap: 24rpx;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48rpx;
+  color: #95a5a6;
+}
+
+.empty-text {
+  font-size: 28rpx;
+}
+
+/* Platform-specific adjustments */
 @media (platform: ios) {
-  .logo {
-    margin-top: 60rpx;
+  .header {
+    padding-top: env(safe-area-inset-top);
   }
 }
 
-@media (platform: android) {
-  .logo {
-    margin-top: 50rpx;
+@media (min-width: 768px) {
+  .container {
+    padding: 48rpx;
+  }
+
+  .upload-options {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
-*/
 </style>

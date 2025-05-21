@@ -10,3 +10,6 @@ export const FEATURE_FLAGS = {
 };
 
 export const TIMEOUT = 15000;
+
+export const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"];
+export const DATE_FORMAT = "YYYY-MM-DD HH:mm";
