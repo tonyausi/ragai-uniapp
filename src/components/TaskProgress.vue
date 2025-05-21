@@ -10,9 +10,16 @@
       </view>
     </view>
 
-    <view class="progress-container" v-if="task.status === 'PROCESSING'">
-      <progress :key="task.progress" :percent="task.progress" />
-      <text class="progress-text">{{ task.progress }}%</text>
+    <view
+      class="progress-container"
+      v-if="task.status === 'PROCESSING' || task.status === 'SUCCESS'"
+    >
+      <!-- Add status to the key to force re-render -->
+      <progress
+        :key="`${task.progress}-${task.status}`"
+        :percent="task.status === 'SUCCESS' ? 100 : task.progress"
+      />
+      <text>{{ task.status === "SUCCESS" ? 100 : task.progress }}%</text>
     </view>
 
     <!-- Error Message Section -->
@@ -64,7 +71,7 @@ export default {
           FAILURE: "error",
           ERROR: "error",
           PROCESSING: "processing",
-        }[this.task.status] || "pending"
+        }[this.task.status] || "processing"
       );
     },
   },
@@ -246,5 +253,16 @@ progress {
   font-size: 14px;
   color: #666;
   margin-top: 4px;
+}
+
+/* completion animation */
+progress[percent="100"] {
+  transition: all 0.5s ease;
+  background-color: #4caf50 !important;
+}
+
+progress[percent="100"]::-webkit-progress-value {
+  transition: all 0.5s ease;
+  background-color: #4caf50;
 }
 </style>

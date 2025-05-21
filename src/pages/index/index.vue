@@ -158,7 +158,7 @@ export default {
         const task = {
           task_id: resdata.task_id,
           filename: file.name || this.remoteUrl,
-          status: "PENDING",
+          status: "STARTED",
           progress: 0,
         };
         if (!this.tasks.some((t) => t.task_id === task.task_id)) {
@@ -188,11 +188,15 @@ export default {
         console.log("Checking task status response:", res);
         const task = this.tasks.find((t) => t.task_id === taskId);
 
+        // Force 100% progress when status is SUCCESS
+        const newProgress =
+          res.data.status === "SUCCESS" ? 100 : res.data.progress;
+
         // Mutate the same object; Vue will pick up the changes
         Object.assign(task, {
           filename: res.data.filename,
           status: res.data.status,
-          progress: res.data.progress,
+          progress: newProgress, // Use forced progress value
           download_path: res.data.download_path,
           error: res.data.error,
           processed_at: res.data.processed_at,
@@ -204,6 +208,8 @@ export default {
           this.$nextTick(() => {
             clearInterval(this.pollingIntervals[taskId]);
             delete this.pollingIntervals[taskId];
+            // Force final UI update
+            this.$forceUpdate();
           });
         }
       } catch (error) {
