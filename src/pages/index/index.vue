@@ -1,6 +1,11 @@
 <template>
   <view class="container">
-    <image class="logo" src="/static/logo.png"></image>
+    <image
+      class="logo"
+      src="/static/logo.png"
+      mode="aspectFit"
+      :style="{ aspectRatio: 9.357 }"
+    ></image>
     <view class="heartbeat-status">
       <view v-if="heartbeat === false" class="error-banner">
         <text>Backend connection lost. Please check the server.</text>
@@ -175,3 +180,44 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.container {
+  display: flex;
+  justify-content: left;
+}
+
+.logo {
+  /* Base size - set only one dimension */
+  width: 200rpx; /* OR height: 200rpx */
+  height: auto; /* Maintain aspect ratio */
+
+  /* Aspect ratio control */
+  aspect-ratio: 9.357; /* Match with inline style value */
+  object-fit: contain;
+
+  /* Responsive constraints */
+  max-width: 80%;
+  max-height: 30vh;
+
+  /* Styling */
+  margin: 40rpx 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16rpx;
+}
+
+/* Optional: Platform-specific tweaks */
+/*
+@media (platform: ios) {
+  .logo {
+    margin-top: 60rpx;
+  }
+}
+
+@media (platform: android) {
+  .logo {
+    margin-top: 50rpx;
+  }
+}
+*/
+</style>
